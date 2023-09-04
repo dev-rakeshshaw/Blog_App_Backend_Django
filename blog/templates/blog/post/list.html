@@ -1,0 +1,45 @@
+{% extends "blog/base.html" %}
+
+{% block title %}My Blog{% endblock %}
+
+{% block content %}
+<h1>My Blog</h1>
+    {% for post in posts %}
+    <h2>
+      
+        {% comment %}
+        <!-- <a href="blog/{{ post.id }}"> -->
+        <!-- <a href="{% url 'blog:post_detail' post.id %}"> -->
+        {% endcomment %}
+
+      <a href="{{ post.get_absolute_url_for_urls_post_details }}">
+        {{ post.title }}
+      </a>
+    </h2>
+    <p class="date">
+      Published {{ post.publish }} by {{ post.author }}
+    </p>
+    {{ post.body|truncatewords:30|linebreaks }}
+    {% endfor %}
+   
+{% comment %}
+  <!-- {% include "blog/pagination.html" with page=posts %} -->
+{% endcomment %}
+
+{% with posts as page %}
+
+<div class="pagination">
+  <span class="step-links">
+    {% if page.has_previous %}
+    <a href="?page={{ .previous_page_number }}">Previous</a>
+    {% endif %}
+    <span class="current">
+      Page {{ page.number }} of {{ page.paginator.num_pages }}.
+    </span>
+    {% if page.has_next %}
+    <a href="?page={{ page.next_page_number }}">Next</a>
+    {% endif %}
+  </span>
+</div>
+{% endwith %}
+{% endblock %}
