@@ -3,11 +3,13 @@ from django.http import Http404
 from .models import Post,Comment
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 # from django.views.generic import ListView
-from .forms import EmailPostForm,CommentForm
+from .forms import EmailPostForm,CommentForm, SearchForm
 from django.core.mail import send_mail
 from django.views.decorators.http import require_POST
 from taggit.models import Tag,TaggedItem
 from django.db.models import Count
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from django.contrib.postgres.search import TrigramSimilarity
 
 
 ## Function to the all the post as a lists.
@@ -187,3 +189,22 @@ def post_comment(request,post_id):
         raise Http404("No Post found.")
     
     return render(request,"blog/post/comment.html",context=confirm_dict)
+
+
+#To handle text-based search using postgresql
+def post_search(request):
+    form = SearchForm()
+    query = None
+    results = []
+
+    if 'query' in request.GET:
+        form = SearchForm(data=request.GET)
+        if form.is_valid():
+            query = form.cleaned_data['query']
+            results = Post.objects.filter(status=Post.Status.PUBLISHED).annotate(similarity=TrigramSimilarity('title', query),).filter(similarity__gt=0.1).order_by('-similarity')
+
+    return render(request,
+                  'blog/post/search.html',
+                  {'form': form,
+                   'query': query,
+                   'results': results})
